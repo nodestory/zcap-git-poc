@@ -82,17 +82,17 @@ class BranchCaveat extends Caveat {
     /**
      * @param [branch] {string} the current branch to use to
      *   validate an branch caveat.
-     * @param [branchScope] {string} the regular expression of acceptable branched to
+     * @param [branchRegExp] {string} the regular expression of acceptable branched to
      *   attach to a capability as a caveat.
      */
-    constructor({ branch, branchScope } = {}) {
+    constructor({ branch, branchRegExp } = {}) {
         // super({ type: 'https://schema.bitmark.com/git/branchCaveat' });
         super({ type: 'git:branchCaveat' });
         if (branch !== undefined) {
             this.branch = branch;
         }
-        if (branchScope !== undefined) {
-            this.branchScope = branchScope;
+        if (branchRegExp !== undefined) {
+            this.branchRegExp = branchRegExp;
         }
     }
 
@@ -106,7 +106,7 @@ class BranchCaveat extends Caveat {
      */
     async validate(caveat) {
         try {
-            const regex = RegExp(caveat['git:branchRegExp']);
+            const regex = RegExp(caveat['https://schema.bitmark.com/git/branchRegExp']);
             if (!regex.test(this.branch)) {
                 throw new Error('The capability is not allowed to write to this branch:', this.branch);
             }
@@ -124,9 +124,10 @@ class BranchCaveat extends Caveat {
      * @return {Promise<object>} resolves to the capability.
      */
     async update(capability) {
+        const branchRegExp = this.branchRegExp;
         jsonld.addValue(capability, 'caveat', {
             type: this.type,
-            'git:branchRegExp': this.branchScope
+            branchRegExp
         });
         return capability;
     }
@@ -145,7 +146,8 @@ class BranchCaveat extends Caveat {
     const newCapability = {
         '@context': [
             SECURITY_CONTEXT_URL,
-            { 'git': 'https://schema.bitmark.com/git/v1' }
+            'https://schema.bitmark.com/git/v1',
+            { git: 'https://schema.bitmark.com/git/v1' },
         ],
         id: 'https://example.org/bob/caps/#1',
         parentCapability: rootCapability.id,
@@ -155,7 +157,7 @@ class BranchCaveat extends Caveat {
     const expires = new Date();
     expires.setHours(expires.getHours() + 1);
     new ExpirationCaveat({ expires }).update(newCapability);
-    new BranchCaveat({ branchScope: 'feature*' }).update(newCapability);
+    new BranchCaveat({ branchRegExp: 'feature*' }).update(newCapability);
 
     const delegatedCapability = await jsigs.sign(newCapability, {
         suite: new Ed25519Signature2018({
