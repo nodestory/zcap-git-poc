@@ -1,0 +1,15 @@
+{
+  "name": "playground",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jsonld-signatures": "git://github.com/digitalbazaar/jsonld-signatures.git#v5.1.0",
+    "ocapld": "git://github.com/digitalbazaar/ocapld.js.git#v2.0.0"
+  }
+}
