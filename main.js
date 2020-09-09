@@ -65,9 +65,7 @@ const loaderData = {
         "privateKeyBase58": "3LftyxxRPxMFXwVChk14HDybE2VnBnPWaLX31WreZwc8V8xCCuoGL7dcyxnwkFXa8D7CZBwAGWj54yqoaxa7gUne"
     },
     "https://schema.bitmark.com/git/v1": {
-        "@context": {
-            "branchRegExp": "https://schema.bitmark.com/git/branchRegExp"
-        }
+        // return term definitions
     }
 }
 const testLoader = async url => {
@@ -86,8 +84,7 @@ class BranchCaveat extends Caveat {
      *   attach to a capability as a caveat.
      */
     constructor({ branch, branchRegExp } = {}) {
-        // super({ type: 'https://schema.bitmark.com/git/branchCaveat' });
-        super({ type: 'git:branchCaveat' });
+        super({ type: 'git:BranchCaveat' });
         if (branch !== undefined) {
             this.branch = branch;
         }
@@ -106,7 +103,7 @@ class BranchCaveat extends Caveat {
      */
     async validate(caveat) {
         try {
-            const regex = RegExp(caveat['https://schema.bitmark.com/git/branchRegExp']);
+            const regex = RegExp(caveat['git:branchRegExp']);
             if (!regex.test(this.branch)) {
                 throw new Error('The capability is not allowed to write to this branch:', this.branch);
             }
@@ -124,10 +121,9 @@ class BranchCaveat extends Caveat {
      * @return {Promise<object>} resolves to the capability.
      */
     async update(capability) {
-        const branchRegExp = this.branchRegExp;
         jsonld.addValue(capability, 'caveat', {
             type: this.type,
-            branchRegExp
+            'git:branchRegExp': this.branchRegExp,
         });
         return capability;
     }
@@ -146,13 +142,13 @@ class BranchCaveat extends Caveat {
     const newCapability = {
         '@context': [
             SECURITY_CONTEXT_URL,
-            'https://schema.bitmark.com/git/v1',
-            { git: 'https://schema.bitmark.com/git/v1' },
+            { git: 'https://schema.bitmark.com/git/v1' }
         ],
         id: 'https://example.org/bob/caps/#1',
         parentCapability: rootCapability.id,
         invocationTarget: rootCapability.id,
-        invoker: bob.id
+        invoker: bob.id,
+        capabilityAction: 'push'
     };
     const expires = new Date();
     expires.setHours(expires.getHours() + 1);
@@ -170,7 +166,7 @@ class BranchCaveat extends Caveat {
     });
     loaderData[delegatedCapability['id']] = delegatedCapability;
     console.log('Bob acquires his capability:');
-    console.log(delegatedCapability);
+    console.log(JSON.stringify(delegatedCapability, null, 2));
 
     // verify Alice's delegation
     result = await jsigs.verify(delegatedCapability, {
@@ -197,7 +193,7 @@ class BranchCaveat extends Caveat {
         })
     });
     console.log('Bob invocates his capability:');
-    console.log(invocation);
+    console.log(JSON.stringify(invocation, null, 2));
 
     // verify the invocation of bob's capability
     result = await jsigs.verify(invocation, {
